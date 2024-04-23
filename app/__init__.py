@@ -11,27 +11,30 @@ db = SQLAlchemy()
 
 
 def create_app():
-    application = Flask(__name__)
+    app = Flask(__name__)
 
-    CORS(application)
+    CORS(app)
 
     FLASK_ENV = os.environ.get('FLASK_ENV')
 
     if FLASK_ENV == 'production':
-        application.config.from_object(ProductionConfig)
+        app.config.from_object(ProductionConfig)
         print("Setting up Production")
     elif FLASK_ENV == 'testing':
-        application.config.from_object(TestingConfig)
+        app.config.from_object(TestingConfig)
         print("Setting up Testing")
     else:
-        application.config.from_object(DevelopmentConfig)
+        app.config.from_object(DevelopmentConfig)
         print("Setting up Development")
 
-    db.init_app(application)
+    db.init_app(app)
 
-    with application.app_context():
+    with app.app_context():
         from . import views
 
         db.create_all()
 
-        return application
+        return app
+
+
+application = create_app()
