@@ -1,11 +1,12 @@
-from flask import Response, Blueprint, request
+from flask import Response, Blueprint, request, send_file, abort
 from app.models import Facility, Images, Models
 from app.utils import get_current_time, allowed_file
 from app.schemas import FacilitySchema
 from marshmallow import ValidationError
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, safe_join
 from app import db
 import json
+import os
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -94,15 +95,15 @@ def upload_files():
 
     for image in uploaded_images:
         image_filename = secure_filename(image.filename)
-        image_url = f'static/facility/images/{image_filename}'
-        image.save(image_url)
+        image_url = f'facility/images/{image_filename}'
+        image.save("static/" + image_url)
         new_image = Images(facility_id=new_facility_id, image_url=image_url, is_preview=False)
         db.session.add(new_image)
         db.session.commit()
 
     model_filename = secure_filename(uploaded_model.filename)
-    model_url = f'static/facility/models/{model_filename}'
-    uploaded_model.save(model_url)
+    model_url = f'facility/models/{model_filename}'
+    uploaded_model.save("static/" + model_url)
 
     new_model = Models(facility_id=new_facility_id, model_url=model_url)
 
@@ -111,3 +112,20 @@ def upload_files():
 
     response = {"status": 200, "text": "Facility created successfully"}
     return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
+
+
+@api.route('static/<path:path>', methods=['GET'])
+def send_static(path):
+    current_path = os.path.abspath(__file__)
+    src_dir = os.path.dirname(current_path)
+    parent_dir = os.path.dirname(src_dir)
+
+    try:
+        full_path = safe_join(os.path.join(parent_dir, '..', 'static'), path)
+    except ValueError:
+        abort(404)
+
+    if not os.path.isfile(full_path):
+        abort(404)
+
+    return send_file(full_path)
