@@ -1,5 +1,4 @@
 from app import application
-import app.views.views
 from app.views.views import api
 
 if __name__ == '__main__':
