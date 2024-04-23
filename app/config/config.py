@@ -6,8 +6,8 @@ load_dotenv()
 
 class Config:
     """Базовый конфигурационный класс."""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-default-secret-key'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///default.db'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///prod.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
