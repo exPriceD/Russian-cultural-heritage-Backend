@@ -16,7 +16,7 @@ def get_facility():
     facility_list = [
         {
             "id": facility.id,
-            "title": facility.title,
+            "title": facility.name,
             "description": facility.description,
             "date_posted": facility.date_posted
         }
@@ -30,7 +30,7 @@ def get_facility():
     return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
 
-@api.route('/facility/<int:id>', methods=['GET'])
+@api.route('/facility/<int:facility_id>', methods=['GET'])
 def get_facility_by_id(facility_id: int):
     facility = Facility.query.filter_by(id=facility_id).first()
 
@@ -47,7 +47,7 @@ def get_facility_by_id(facility_id: int):
         "status": 200,
         "facility": {
             "id": facility.id,
-            "title": facility.title,
+            "title": facility.name,
             "description": facility.description,
             "date_posted": facility.date_posted,
             "model": model.model_url,
