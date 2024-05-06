@@ -1,9 +1,12 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+
 from .config.config import DevelopmentConfig, ProductionConfig, TestingConfig
+
 import os
 from dotenv import load_dotenv
-from flask_cors import CORS
+import redis
 
 load_dotenv()
 
@@ -12,6 +15,8 @@ db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
+
+    app.redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0, encoding='utf-8')
 
     CORS(app)
 
