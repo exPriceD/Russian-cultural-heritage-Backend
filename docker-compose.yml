@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+
+    command: python run.py
+
+    volumes:
+      - .:/src
+      - static_volume:/src/static
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      - db
+      - cache
+
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=2109190d9usa9293j23js7gZWus1qwi32j8aZ
+      - DEV_DATABASE_URL=postgresql+psycopg2://postgres:superuser@db/history
+      - TEST_DATABASE_URL=
+      - PROD_DATABASE_URL=
+
+  db:
+    image: postgres
+
+    restart: always
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=superuser
+      - POSTGRES_DB=history
+
+  cache:
+    image: redis:7
+
+    volumes:
+      - redis_data:/var/lib/redis/data
+
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
