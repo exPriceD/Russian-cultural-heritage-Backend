@@ -133,6 +133,10 @@ def upload_files():
     db.session.add(new_model)
     db.session.commit()
 
+    redis_client = getattr(current_app, 'redis_client', None)
+    if redis_client is not None:
+        redis_client.delete('facilities')
+
     response = {"status": 200, "text": "Facility created successfully"}
     return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
