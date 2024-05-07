@@ -105,7 +105,7 @@ def get_facility_by_id(facility_id: int):
 
 
 @api.route('/facility', methods=['POST'])
-def upload_files():
+def add_facility():
     schema = FacilitySchema()
     try:
         data = schema.load(request.form)

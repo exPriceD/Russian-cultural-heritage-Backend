@@ -1,5 +1,5 @@
 from app import application
-from app.views.views import api
+from app.views.api import api
 
 if __name__ == '__main__':
     application.register_blueprint(api)

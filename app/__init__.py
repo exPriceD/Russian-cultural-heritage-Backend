@@ -38,7 +38,7 @@ def create_app():
     db.init_app(app)
 
     with app.app_context():
-        from .views import views
+        from .views import api
 
         db.create_all()
 
