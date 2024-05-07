@@ -1,12 +1,16 @@
 from flask import Response, Blueprint, request, send_file, abort, current_app
+
 from app.models import Facility, Images, Models
 from app.utils import get_current_time, allowed_file
 from app.schemas import FacilitySchema
+from app import db
+
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename, safe_join
-from app import db
+
 import json
 import os
+from redis import RedisError
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -14,13 +18,18 @@ api = Blueprint('api', __name__, url_prefix='/api')
 @api.route('/facility', methods=['GET'])
 def get_facility():
     redis_client = getattr(current_app, 'redis_client', None)
+    cache_value = None
 
     if redis_client is not None:
-        cache_value: bytes = redis_client.get('facilities')
+        try:
+            cache_value = redis_client.get('facilities')
+        except RedisError as e:
+            current_app.logger.error(f"Redis error: {e}")
+            cache_value = None
 
-        if cache_value is not None:
-            response = json.loads(cache_value.decode('utf-8'))
-            return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
+    if cache_value is not None:
+        response = json.loads(cache_value.decode('utf-8'))
+        return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
     facility = Facility.query.all()
     facility_list = [
@@ -38,7 +47,11 @@ def get_facility():
         "facility": facility_list
     }
 
-    redis_client.set('facilities', json.dumps(response), ex=30)
+    if redis_client is not None:
+        try:
+            redis_client.set('facilities', json.dumps(response), ex=30)
+        except RedisError as e:
+            current_app.logger.error(f"Failed to set cache for facilities: {e}")
 
     return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
@@ -46,13 +59,18 @@ def get_facility():
 @api.route('/facility/<int:facility_id>', methods=['GET'])
 def get_facility_by_id(facility_id: int):
     redis_client = getattr(current_app, 'redis_client', None)
+    cache_value = None
 
     if redis_client is not None:
-        cache_value: bytes = redis_client.get(f'facility:{facility_id}')
+        try:
+            cache_value = redis_client.get(f'facility:{facility_id}')
+        except RedisError as e:
+            current_app.logger.error(f"Redis error: {e}")
+            cache_value = None
 
-        if cache_value is not None:
-            response = json.loads(cache_value.decode('utf-8'))
-            return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
+    if cache_value is not None:
+        response = json.loads(cache_value.decode('utf-8'))
+        return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
     facility = Facility.query.filter_by(id=facility_id).first()
 
@@ -76,7 +94,12 @@ def get_facility_by_id(facility_id: int):
             "images": facility_images
         }
     }
-    redis_client.set(f'facility:{facility_id}', json.dumps(response), ex=30)
+
+    if redis_client is not None:
+        try:
+            redis_client.set(f'facility:{facility_id}', json.dumps(response), ex=30)
+        except RedisError as e:
+            current_app.logger.error(f"Failed to set cache for facility {facility_id}: {e}")
 
     return Response(response=json.dumps(response, ensure_ascii=False), status=200, mimetype='application/json')
 
