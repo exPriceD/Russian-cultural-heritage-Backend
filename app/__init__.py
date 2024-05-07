@@ -16,7 +16,10 @@ db = SQLAlchemy()
 def create_app():
     app = Flask(__name__)
 
-    app.redis_client = redis.Redis(host=os.getenv("REDIS_HOST"), port=6379, db=0, encoding='utf-8')
+    app.redis_client = redis.Redis(
+        host=os.getenv("REDIS_HOST"), port=6379, db=0, encoding='utf-8',
+        socket_connect_timeout=int(os.getenv("REDIS_SOCKET_CONNECT_TIMEOUT"))
+    )
 
     CORS(app)
 
