@@ -6,7 +6,7 @@ class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
     description = db.Column(db.String(65536), nullable=False)
-    date_posted = db.Column(db.String(128))
+    date_posted = db.Column(db.String(128), nullable=False)
 
 
 class Images(db.Model):
@@ -30,3 +30,4 @@ class Team(db.Model):
     name = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(256), nullable=False)
     image_url = db.Column(db.String(512), nullable=False)
+    source_link = db.Column(db.String(512), nullable=True)
