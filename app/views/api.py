@@ -12,6 +12,10 @@ import json
 import os
 # from redis import RedisError
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 api = Blueprint('api', __name__, url_prefix='/api')
 
 
@@ -92,7 +96,7 @@ def get_facility_by_id(facility_id: int):
             "title": facility.name,
             "description": facility.description,
             "date_posted": facility.date_posted,
-            "model": model.model_url,
+            "model": model.model_url if model is not None else None,
             "images": facility_images
         }
     }
@@ -115,6 +119,10 @@ def add_facility():
         response = {"status": 400, "text": err.messages}
         return Response(response=json.dumps(response, ensure_ascii=False), status=400, mimetype='application/json')
 
+    if data.get('editor_key') != os.environ.get('EDITOR_KEY'):
+        response = {"status": 400, "text": "Incorrect editor key"}
+        return Response(response=json.dumps(response, ensure_ascii=False), status=400, mimetype='application')
+
     facility_name = data.get('title')
     description = data.get('description')
 
@@ -128,8 +136,8 @@ def add_facility():
         }
         return Response(response=json.dumps(response, ensure_ascii=False), status=400, mimetype='application/json')
 
-    if not uploaded_model or not uploaded_model.filename.lower().endswith('.glb'):
-        response = {"status": 400, "text": "A valid .glb model file is required"}
+    if uploaded_model and not uploaded_model.filename.lower().endswith('.glb'):
+        response = {"status": 400, "text": "If provided, the model file must be a valid .glb file"}
         return Response(response=json.dumps(response, ensure_ascii=False), status=400, mimetype='application/json')
 
     date_now = get_current_time()
@@ -149,14 +157,13 @@ def add_facility():
         db.session.add(new_image)
         db.session.commit()
 
-    model_filename = secure_filename(uploaded_model.filename)
-    model_url = f'facility/models/{model_filename}'
-    uploaded_model.save("static/" + model_url)
-
-    new_model = Models(facility_id=new_facility_id, model_url=model_url)
-
-    db.session.add(new_model)
-    db.session.commit()
+    if uploaded_model:
+        model_filename = secure_filename(uploaded_model.filename)
+        model_url = f'facility/models/{model_filename}'
+        uploaded_model.save("static/" + model_url)
+        new_model = Models(facility_id=new_facility_id, model_url=model_url)
+        db.session.add(new_model)
+        db.session.commit()
 
     """redis_client = getattr(current_app, 'redis_client', None)
     if redis_client is not None:
