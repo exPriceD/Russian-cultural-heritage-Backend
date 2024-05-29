@@ -3,40 +3,44 @@ version: '3.8'
 services:
   web:
     build: .
-
     command: python run.py
-
     volumes:
       - .:/src
       - static_volume:/src/static
-
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     ports:
       - "5000:5000"
-
+      - "5001:5001"
     depends_on:
       - db
       - redis
-
     environment:
       - FLASK_ENV=development
       - SECRET_KEY=2109190d9usa9293j23js7gZWus1qwi32j8aZ
-
       - DEV_DATABASE_URL=postgresql+psycopg2://postgres:superuser@db/history
       - TEST_DATABASE_URL=
       - PROD_DATABASE_URL=
-
       - REDIS_HOST=redis
 
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./data/certbot/www:/var/www/certbot
+      - ./data/certbot/conf:/etc/letsencrypt 
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
 
   db:
     image: postgres
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
     ports:
-      - "5432:5432"
-
+      - "5433:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=superuser
@@ -44,12 +48,17 @@ services:
 
   redis:
     image: redis:latest
-
     volumes:
       - redis_data:/var/lib/redis/data
-
     ports:
       - "6379:6379"
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h; done'"
 
 volumes:
   postgres_data:
