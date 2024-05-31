@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename, safe_join
 
 import json
 import os
+import uuid
 # from redis import RedisError
 
 from dotenv import load_dotenv
@@ -150,7 +151,8 @@ def add_facility():
     new_facility_id = new_facility.id
 
     for image in uploaded_images:
-        image_filename = secure_filename(image.filename)
+        unique_id = uuid.uuid4().hex
+        image_filename = secure_filename(f"{unique_id}_{image.filename}")
         image_url = f'facility/images/{image_filename}'
         image.save("static/" + image_url)
         new_image = Images(facility_id=new_facility_id, image_url=image_url, is_preview=False)
@@ -158,7 +160,8 @@ def add_facility():
         db.session.commit()
 
     if uploaded_model:
-        model_filename = secure_filename(uploaded_model.filename)
+        unique_id = uuid.uuid4().hex
+        model_filename = secure_filename(f"{unique_id}_{uploaded_model.filename}")
         model_url = f'facility/models/{model_filename}'
         uploaded_model.save("static/" + model_url)
         new_model = Models(facility_id=new_facility_id, model_url=model_url)
