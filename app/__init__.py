@@ -21,7 +21,7 @@ def create_app():
         socket_connect_timeout=int(os.getenv("REDIS_SOCKET_CONNECT_TIMEOUT"))
     )"""
 
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "https://russian-cultural-heritage.vercel.app/"}})
 
     FLASK_ENV = os.environ.get('FLASK_ENV')
 
